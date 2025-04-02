@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruta Circular con Localización en OpenStreetMap</title>
+
+    <!-- Estilos de Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <style>
+        body, html {
+            margin: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+
+        #mapa {
+            width: 500px;
+            max-width: 600px;
+            height: 400px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ruta Circular de la Muralla</h1>
+    <div id="mapa"></div>
+
+    <script>
+        // Crear el mapa centrado en la zona
+        var mapa = L.map('mapa').setView([19.844, -90.537], 16);
+
+        // Agregar la capa base de OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mapa);
+
+        // Lista de puntos de interés (en orden de la ruta circular)
+        var puntosInteres = [
+            [19.845956, -90.538434], [19.8445409, -90.5405275], [19.8438377, -90.5404112],
+            [19.8442026, -90.5396355], [19.8434665, -90.5392288], [19.8428290, -90.5405243],
+            [19.8417847, -90.5404793], [19.8413050, -90.5400701], [19.8404237, -90.5379828],
+            [19.841461, -90.536007], [19.8414045, -90.5360686], [19.8429142, -90.5325024],
+            [19.8434360, -90.5325208], [19.8460411, -90.5332080], [19.8475395, -90.5346136],
+            [19.8465014, -90.5368313], [19.8457473, -90.5365085], [19.8454143, -90.5372269],
+            [19.8461096, -90.5375497], [19.845956, -90.538434] 
+        ];
+
+        // Dibujar la ruta circular (polyline)
+        L.polyline(puntosInteres, {
+            color: 'red',
+            weight: 6,
+            opacity: 0.9,
+            smoothFactor: 1
+        }).addTo(mapa);
+
+        // Agregar marcadores en puntos de interés
+        var lugares = [
+            { nombre: "Puerta de Mar", coords: [19.845956, -90.538434] },
+            { nombre: "Baluarte de San Carlos", coords: [19.844673, -90.540748] },
+            { nombre: "Ex Templo y Colegio de San José", coords: [19.844238, -90.539773] },
+            { nombre: "Ex Escuela Nautica", coords: [19.843511, -90.539222] },
+            { nombre: "Puerta de Tierra", coords: [19.841461, -90.536007] },
+            { nombre: "Cañon de Bronce", coords: [19.8414045, -90.5360686] },
+            { nombre: "Baluarte de San Pedro", coords: [19.843284, -90.532543] },
+            { nombre: "Ex Hospital San Juan de Dios", coords: [19.8437104, -90.5330236] },
+            { nombre: "Ex Aduana Marítima", coords: [19.846437, -90.537275] }
+        ];
+
+        lugares.forEach(lugar => {
+            L.marker(lugar.coords).addTo(mapa)
+                .bindPopup(lugar.nombre);
+        });
+
+        // Variables para la ubicación del usuario
+        var marcadorUsuario, circuloUsuario;
+
+        function actualizarUbicacion(posicion) {
+            var lat = posicion.coords.latitude;
+            var lon = posicion.coords.longitude;
+            var precision = posicion.coords.accuracy; // Precisión en metros
+
+            // Si no existe el marcador del usuario, lo crea
+            if (!marcadorUsuario) {
+                marcadorUsuario = L.marker([lat, lon]).addTo(mapa)
+                    .bindPopup("📍 Estás aquí").openPopup();
+                circuloUsuario = L.circle([lat, lon], {
+                    radius: precision,
+                    color: "blue",
+                    fillColor: "#00f",
+                    fillOpacity: 0.2
+                }).addTo(mapa);
+            } else {
+                // Si ya existe, solo actualiza su posición
+                marcadorUsuario.setLatLng([lat, lon]);
+                circuloUsuario.setLatLng([lat, lon]).setRadius(precision);
+            }
+
+            // Centrar el mapa en la ubicación del usuario con zoom adecuado
+            mapa.setView([lat, lon], 17);
+        }
+
+        function errorUbicacion(error) {
+            alert("Error obteniendo ubicación: " + error.message);
+        }
+
+        // Obtener la ubicación en tiempo real con alta precisión
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(actualizarUbicacion, errorUbicacion, {
+                enableHighAccuracy: true, // 🚀 Alta precisión (GPS)
+                timeout: 10000,  
+                maximumAge: 0  
+            });
+        } else {
+            alert("⚠️ Tu navegador no soporta geolocalización.");
+        }
+    </script>
+</body>
+</html>
